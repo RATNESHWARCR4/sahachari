@@ -1,0 +1,20 @@
+
+Vertex AI Gemini Pro:
+Generating hyper-local, cultural stories or poems (Kahani Kar)
+Creating active, no material learning games (Khel Khel Me)
+Answering students’ and teachers’ questions using the reference materials (Gyan-Kosh)
+Generating auto-linked weekly lesson plan (Path-Yojak)
+	
+Vertex AI speech-to-text:
+For auto reading assessment (Vachan Guru)
+Teachers’ voice to text
+
+Vertex AI text-to-speech:
+Generate text to speech if needed for feedback on (Vachan Guru)
+ 
+Vertex AI Imagen 2:
+To generate diagrams and images (Rupdrishti)
+
+Vertex AI Vision:
+Create worksheets using images from textbook (Path Prakriya)
+
