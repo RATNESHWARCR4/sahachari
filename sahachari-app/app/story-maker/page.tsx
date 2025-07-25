@@ -131,7 +131,9 @@ export default function StoryMakerPage() {
   const processAudio = async (audioBlob: Blob) => {
     // For demo purposes, we'll use Web Speech API
     // In production, this would send to your speech-to-text API
-    toast.info('Processing audio...');
+    toast('Processing audio...', {
+      icon: <Loader2 className="animate-spin" />,
+    });
     
     // Simulate processing
     setTimeout(() => {
@@ -514,4 +516,4 @@ export default function StoryMakerPage() {
       </div>
     </div>
   );
-} 
+}

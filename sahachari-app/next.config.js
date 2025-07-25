@@ -6,7 +6,9 @@ const nextConfig = {
   },
   experimental: {
     serverActions: true,
+    serverComponentsExternalPackages: ['supports-color'],
   },
+  transpilePackages: ['supports-color'],
 }
 
 module.exports = nextConfig 

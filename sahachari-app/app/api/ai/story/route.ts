@@ -63,7 +63,15 @@ Generate the story now:`;
     // Generate content
     const result = await model.generateContent(magicPrompt);
     const response = await result.response;
-    const story = response.text();
+    const story = response.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!story) {
+      console.error('No story content found in Vertex AI response:', response);
+      return NextResponse.json(
+        { error: 'Failed to extract story from AI response' },
+        { status: 500 }
+      );
+    }
     
     return NextResponse.json({
       success: true,

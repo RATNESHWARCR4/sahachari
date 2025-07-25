@@ -82,18 +82,31 @@ Requirements:
   ]
 }`;
       
-      const result = await model.generateContent([
-        { text: magicPrompt },
-        {
-          inlineData: {
-            mimeType: 'image/jpeg',
-            data: base64Image,
+      const result = await model.generateContent({
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { text: magicPrompt },
+              {
+                inlineData: {
+                  mimeType: 'image/jpeg',
+                  data: base64Image,
+                },
+              },
+            ],
           },
-        },
-      ]);
+        ],
+      });
       
       const response = await result.response;
-      const text = response.text();
+      const text = response.candidates?.[0]?.content?.parts?.[0]?.text;
+      
+      if (!text) {
+        console.error('No worksheet content found in Vertex AI response:', response);
+        // Skip this grade if no content is generated
+        continue;
+      }
       
       // Parse JSON from response
       try {
