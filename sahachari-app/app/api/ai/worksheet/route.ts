@@ -1,147 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { VertexAI } from '@google-cloud/vertexai';
-import { adminAuth, adminStorage } from '@/app/lib/firebase-admin';
+import { vertexAI } from '@/app/lib/google-cloud'; // Using the new centralized client
+import { adminAuth } from '@/app/lib/firebase-admin';
 
-// Initialize Vertex AI
-const initVertexAI = () => {
-  const serviceAccountBase64 = process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64;
-  
-  if (serviceAccountBase64) {
-    const serviceAccount = JSON.parse(
-      Buffer.from(serviceAccountBase64, 'base64').toString('utf-8')
-    );
+const getWorksheetPrompt = (text: string, grades: string[], language: string) => {
+  return `
+    You are an expert Indian primary school teacher. Your task is to create a set of differentiated worksheets based on the following text, which is from a textbook page.
+    The worksheets should be created for students in the following grades: ${grades.join(', ')}.
+    The output should be in the ${language} language.
+
+    TEXTBOOK CONTENT:
+    ---
+    ${text}
+    ---
+
+    INSTRUCTIONS:
+    For each grade level provided, create a section with 3-4 relevant questions or activities that are appropriate for that specific grade's learning level.
+    The questions should encourage critical thinking and comprehension.
+    Use clear headings for each grade's section.
+
+    Example format:
+    ---
+    **Grade ${grades[0]} Worksheet**
+    1. [Question for Grade ${grades[0]}]
+    2. [Activity for Grade ${grades[0]}]
+    3. [Question for Grade ${grades[0]}]
+
+    **Grade ${grades[1]} Worksheet**
+    1. [Question for Grade ${grades[1]}]
+    2. [Activity for Grade ${grades[1]}]
+    ---
     
-    process.env.GOOGLE_APPLICATION_CREDENTIALS = JSON.stringify(serviceAccount);
-  }
-  
-  return new VertexAI({
-    project: process.env.GOOGLE_CLOUD_PROJECT_ID!,
-    location: process.env.GOOGLE_CLOUD_LOCATION || 'us-central1',
-  });
+    Now, generate the worksheets based on the provided text.
+  `;
 };
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify authentication
+    if (!vertexAI) {
+      throw new Error('Vertex AI client is not initialized. Check server logs for initialization errors.');
+    }
+
     const authHeader = request.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
     const token = authHeader.split('Bearer ')[1];
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    const userId = decodedToken.uid;
-    
-    // Get request data
-    const { imageUrl, grades, subject, topic } = await request.json();
-    
-    // Download image from Firebase Storage
-    const bucket = adminStorage.bucket();
-    const fileName = imageUrl.split('/').pop();
-    const file = bucket.file(`textbooks/${fileName}`);
-    const [imageBuffer] = await file.download();
-    
-    // Convert to base64
-    const base64Image = imageBuffer.toString('base64');
-    
-    // Initialize Vertex AI
-    const vertexAI = initVertexAI();
-    const model = vertexAI.getGenerativeModel({
-      model: 'gemini-pro-vision',
-    });
-    
-    // Create worksheets for each grade
-    const worksheets = [];
-    
-    for (const grade of grades) {
-      const magicPrompt = `Analyze this image of a textbook page. The topic is "${topic}" for subject "${subject}".
-      
-Generate a differentiated worksheet for Grade ${grade} students in a multi-grade classroom in rural India.
+    await adminAuth.verifyIdToken(token);
 
-Requirements:
-- Create questions appropriate for Grade ${grade} level
-- Use simple, clear language
-- Include different types of questions based on grade level:
-  * For grades 1-3: Matching, coloring, simple fill-in-the-blanks with word bank
-  * For grades 4-5: Fill-in-the-blanks, short answer questions, simple problem solving
-  * For grades 6-8: Critical thinking questions, application-based problems
-- Make it suitable for copying on a blackboard (no complex diagrams)
-- Include 5-7 questions
-- Format the output as JSON with this structure:
-{
-  "title": "Worksheet title",
-  "grade": ${grade},
-  "questions": [
-    {
-      "question": "Question text",
-      "type": "mcq|fillblank|shortanswer|matching",
-      "options": ["option1", "option2"] (for MCQ),
-      "wordBank": ["word1", "word2"] (for fill-in-the-blanks),
-      "answer": "correct answer"
+    const { text, grades, language } = await request.json();
+
+    if (!text || !grades || grades.length === 0) {
+      return NextResponse.json({ error: 'Text and at least one grade are required.' }, { status: 400 });
     }
-  ]
-}`;
-      
-      const result = await model.generateContent({
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              { text: magicPrompt },
-              {
-                inlineData: {
-                  mimeType: 'image/jpeg',
-                  data: base64Image,
-                },
-              },
-            ],
-          },
-        ],
-      });
-      
-      const response = await result.response;
-      const text = response.candidates?.[0]?.content?.parts?.[0]?.text;
-      
-      if (!text) {
-        console.error('No worksheet content found in Vertex AI response:', response);
-        // Skip this grade if no content is generated
-        continue;
-      }
-      
-      // Parse JSON from response
-      try {
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          const worksheetData = JSON.parse(jsonMatch[0]);
-          worksheets.push(worksheetData);
-        }
-      } catch (parseError) {
-        console.error('Failed to parse worksheet JSON:', parseError);
-        // Fallback: return raw text
-        worksheets.push({
-          grade,
-          title: `${topic} - Grade ${grade}`,
-          rawContent: text,
-        });
-      }
+
+    const model = vertexAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const prompt = getWorksheetPrompt(text, grades, language);
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const worksheet = response.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!worksheet) {
+      console.error('Worksheet generation failed:', response);
+      return NextResponse.json({ error: 'Failed to generate worksheet from AI response.' }, { status: 500 });
     }
-    
-    return NextResponse.json({
-      success: true,
-      worksheets,
-      metadata: {
-        grades,
-        subject,
-        topic,
-        generatedAt: new Date().toISOString(),
-      },
-    });
-    
+
+    return NextResponse.json({ success: true, worksheet });
+
   } catch (error: any) {
-    console.error('Worksheet generation error:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate worksheets', details: error.message },
-      { status: 500 }
-    );
+    console.error('Worksheet API Error:', error);
+    return NextResponse.json({ error: 'Failed to generate worksheet', details: error.message }, { status: 500 });
   }
-} 
+}

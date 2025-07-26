@@ -40,14 +40,14 @@ const features = [
   },
   {
     icon: Brain,
-    key: 'knowledgeBase',
-    href: '/knowledge-base',
+    key: 'gyanKosh',
+    href: '/gyan-kosh',
     color: 'bg-purple-500',
   },
   {
     icon: Image,
-    key: 'visualAids',
-    href: '/visual-aids',
+    key: 'rupdrishti',
+    href: '/rupdrishti',
     color: 'bg-orange-500',
   },
   {
@@ -258,4 +258,4 @@ export default function HomePage() {
       )}
     </div>
   );
-} 
+}

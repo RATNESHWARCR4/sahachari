@@ -24,9 +24,10 @@
   "dependencies": {
     "@google-cloud/aiplatform": "^3.25.0",
     "@google-cloud/speech": "^6.7.0",
-    "@google-cloud/text-to-speech": "^5.5.0",
+    "@google-cloud/text-to-speech": "^5.8.1",
     "@google-cloud/translate": "^8.5.0",
     "@google-cloud/vertexai": "^1.10.0",
+    "@google/generative-ai": "^0.24.1",
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-select": "^2.1.2",
     "@radix-ui/react-tabs": "^1.1.1",
