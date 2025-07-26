@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   User as FirebaseUser,
   signInWithEmailAndPassword,
@@ -29,6 +30,7 @@ declare global {
 }
 
 export function useAuth() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const { user, setUser } = useStore();
@@ -43,17 +45,19 @@ export function useAuth() {
           setUser(userData);
         } else {
           // Create user document if it doesn't exist
-          const newUser: User = {
+          const newUser: Partial<User> = {
             id: firebaseUser.uid,
             email: firebaseUser.email || '',
             name: firebaseUser.displayName || '',
-            phone: firebaseUser.phoneNumber || undefined,
             language: 'en',
             createdAt: new Date(),
             updatedAt: new Date(),
           };
+          if (firebaseUser.phoneNumber) {
+            newUser.phone = firebaseUser.phoneNumber;
+          }
           await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
-          setUser(newUser);
+          setUser(newUser as User);
         }
       } else {
         setUser(null);
@@ -124,7 +128,7 @@ export function useAuth() {
       const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
       if (!userDoc.exists()) {
         // Create new user
-        const newUser: User = {
+        const newUser: Partial<User> = {
           id: firebaseUser.uid,
           email: firebaseUser.email || '',
           name: firebaseUser.displayName || '',
@@ -132,7 +136,11 @@ export function useAuth() {
           createdAt: new Date(),
           updatedAt: new Date(),
         };
+        if (firebaseUser.phoneNumber) {
+          newUser.phone = firebaseUser.phoneNumber;
+        }
         await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+        setUser(newUser as User);
       }
       
       toast.success('Welcome!');
@@ -173,16 +181,19 @@ export function useAuth() {
       const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
       if (!userDoc.exists()) {
         // Create new user
-        const newUser: User = {
+        const newUser: Partial<User> = {
           id: firebaseUser.uid,
           email: firebaseUser.email || '',
           name: firebaseUser.displayName || 'Teacher',
-          phone: firebaseUser.phoneNumber || undefined,
           language: 'en',
           createdAt: new Date(),
           updatedAt: new Date(),
         };
+        if (firebaseUser.phoneNumber) {
+          newUser.phone = firebaseUser.phoneNumber;
+        }
         await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+        setUser(newUser as User);
       }
       
       toast.success('Phone verification successful!');
@@ -227,6 +238,7 @@ export function useAuth() {
       await firebaseSignOut(auth);
       setUser(null);
       toast.success('Signed out successfully');
+      router.push('/auth/signin');
       return { success: true };
     } catch (error: any) {
       toast.error(error.message);
@@ -247,4 +259,4 @@ export function useAuth() {
     resetPassword,
     updateUserProfile,
   };
-} 
+}

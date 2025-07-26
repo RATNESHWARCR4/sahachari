@@ -106,7 +106,6 @@ export default function StoryMakerPage() {
       
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        // Convert to text using Web Speech API or send to server
         await processAudio(audioBlob);
         stream.getTracks().forEach(track => track.stop());
       };
@@ -129,16 +128,33 @@ export default function StoryMakerPage() {
   };
 
   const processAudio = async (audioBlob: Blob) => {
-    // For demo purposes, we'll use Web Speech API
-    // In production, this would send to your speech-to-text API
-    toast('Processing audio...', {
-      icon: <Loader2 className="animate-spin" />,
-    });
+    const loadingToast = toast.loading('Transcribing audio...');
     
-    // Simulate processing
-    setTimeout(() => {
-      toast.success('Audio processed!');
-    }, 2000);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'audio.webm');
+
+      const response = await fetch('/api/ai/speech-to-text', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setPrompt(data.transcription);
+        toast.success('Audio transcribed successfully!', { id: loadingToast });
+      } else {
+        toast.error(`Transcription failed: ${data.details || data.error}`, { id: loadingToast });
+      }
+    } catch (error) {
+      console.error('Transcription error:', error);
+      toast.error('Failed to transcribe audio', { id: loadingToast });
+    }
   };
 
   const generateStory = async () => {

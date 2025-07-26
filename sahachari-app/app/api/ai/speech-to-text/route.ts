@@ -4,7 +4,6 @@ import { adminAuth } from '@/app/lib/firebase-admin';
 
 // Initialize Vertex AI
 const initVertexAI = () => {
-  // Decode base64 service account if provided
   const serviceAccountBase64 = process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64;
   let credentials = {};
 
@@ -13,6 +12,10 @@ const initVertexAI = () => {
       const serviceAccount = JSON.parse(
         Buffer.from(serviceAccountBase64, 'base64').toString('utf-8')
       );
+
+      // Temporary: Log the decoded service account to the console.
+      console.log('Decoded Service Account:', serviceAccount);
+
       credentials = {
         client_email: serviceAccount.client_email,
         private_key: serviceAccount.private_key,
@@ -22,7 +25,7 @@ const initVertexAI = () => {
       // Fallback or throw error as appropriate
     }
   }
-  
+
   return new VertexAI({
     project: process.env.GOOGLE_CLOUD_PROJECT_ID!,
     location: process.env.GOOGLE_CLOUD_LOCATION || 'us-central1',
@@ -32,72 +35,65 @@ const initVertexAI = () => {
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify authentication
+    // Verify authentication (optional, but good practice)
     const authHeader = request.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
     const token = authHeader.split('Bearer ')[1];
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    const userId = decodedToken.uid;
-    
-    // Get request data
-    const { prompt, language, topic, ageGroup, state } = await request.json();
-    
+    await adminAuth.verifyIdToken(token);
+
+    const formData = await request.formData();
+    const audioFile = formData.get('audio') as Blob | null;
+
+    if (!audioFile) {
+      return NextResponse.json({ error: 'No audio file provided' }, { status: 400 });
+    }
+
+    // Convert blob to base64 for Vertex AI
+    const audioBuffer = Buffer.from(await audioFile.arrayBuffer());
+    const audioBase64 = audioBuffer.toString('base64');
+
     // Initialize Vertex AI
     const vertexAI = initVertexAI();
+    
     const model = vertexAI.getGenerativeModel({
       model: 'gemini-pro',
     });
-    
-    // Create the magic prompt
-    const magicPrompt = `You are an expert Indian storyteller. Your user is a teacher in a rural, multi-grade classroom in ${state || 'India'}. 
-    
-Generate a short, simple, and culturally relevant story in ${language} for children aged ${ageGroup}. 
-The story must explain the concept of "${topic}" through local characters and situations.
 
-Requirements:
-- Use simple vocabulary and sentence structures appropriate for the age group
-- Include local cultural elements, names, and situations
-- The story should be easy to narrate and remember
-- Include a positive moral or learning outcome
-- Keep it under 500 words
-- Make it engaging and interactive where possible
-
-User's request: ${prompt}
-
-Generate the story now:`;
+    const transcriptionPrompt = `Transcribe the following audio. Only return the transcribed text, nothing else.`;
     
-    // Generate content
-    const result = await model.generateContent(magicPrompt);
+    const parts = [
+      { text: transcriptionPrompt },
+      {
+        inlineData: {
+          mimeType: audioFile.type || 'audio/webm', // Ensure correct MIME type
+          data: audioBase64,
+        },
+      },
+    ];
+
+    const result = await model.generateContent({ contents: [{ role: 'user', parts }] });
     const response = await result.response;
-    const story = response.candidates?.[0]?.content?.parts?.[0]?.text;
+    const transcription = response.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    if (!story) {
-      console.error('No story content found in Vertex AI response:', response);
+    if (!transcription) {
+      console.error('No transcription content found in Vertex AI response:', response);
       return NextResponse.json(
-        { error: 'Failed to extract story from AI response' },
+        { error: 'Failed to transcribe audio from AI response' },
         { status: 500 }
       );
     }
-    
+
     return NextResponse.json({
       success: true,
-      story,
-      metadata: {
-        language,
-        topic,
-        ageGroup,
-        generatedAt: new Date().toISOString(),
-      },
+      transcription,
     });
-    
   } catch (error: any) {
-    console.error('Story generation error:', error);
+    console.error('Speech-to-text error:', error);
     return NextResponse.json(
-      { error: 'Failed to generate story', details: error.message },
+      { error: 'Failed to transcribe audio', details: error.message },
       { status: 500 }
     );
   }
-} 
+}

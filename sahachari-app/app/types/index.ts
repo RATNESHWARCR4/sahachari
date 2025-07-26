@@ -5,6 +5,8 @@ export interface User {
   email: string;
   name: string;
   phone?: string;
+  teacherId?: string;
+  schoolAddress?: string;
   language: Language;
   school?: string;
   district?: string;
@@ -137,4 +139,4 @@ export interface TeacherCirclePost {
   district?: string;
   state?: string;
   createdAt: Date;
-} 
+}
