@@ -1,74 +1,60 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { vertexAI } from '@/app/lib/google-cloud'; // Using the new centralized client
-import { adminAuth } from '@/app/lib/firebase-admin';
+// app/api/ai/worksheet/route.ts
+import { NextResponse } from 'next/server';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const getWorksheetPrompt = (text: string, grades: string[], language: string) => {
-  return `
-    You are an expert Indian primary school teacher. Your task is to create a set of differentiated worksheets based on the following text, which is from a textbook page.
-    The worksheets should be created for students in the following grades: ${grades.join(', ')}.
-    The output should be in the ${language} language.
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-    TEXTBOOK CONTENT:
-    ---
-    ${text}
-    ---
+const magicPrompt = `
+You are an expert Indian educator. Generate a well-formatted worksheet in Markdown format based on the provided image.
 
-    INSTRUCTIONS:
-    For each grade level provided, create a section with 3-4 relevant questions or activities that are appropriate for that specific grade's learning level.
-    The questions should encourage critical thinking and comprehension.
-    Use clear headings for each grade's section.
+The worksheet must be in **[SELECTED_LANGUAGE]**.
 
-    Example format:
-    ---
-    **Grade ${grades[0]} Worksheet**
-    1. [Question for Grade ${grades[0]}]
-    2. [Activity for Grade ${grades[0]}]
-    3. [Question for Grade ${grades[0]}]
+Create the following activities based on the image content:
+[GRADE_PROMPTS]
 
-    **Grade ${grades[1]} Worksheet**
-    1. [Question for Grade ${grades[1]}]
-    2. [Activity for Grade ${grades[1]}]
-    ---
-    
-    Now, generate the worksheets based on the provided text.
-  `;
-};
+**Formatting Rules:**
+- Use Markdown for all formatting.
+- Use a main heading for the worksheet topic (e.g., '# Worksheet: Photosynthesis').
+- Use subheadings for each grade's section (e.g., '## Grade 1: Match the Following').
+- Each question and its corresponding answer option(s) must be on a new line.
+- Do not include the answers in the questions. Provide a separate 'Answer Key' section at the end.
+`;
 
-export async function POST(request: NextRequest) {
+async function fileToGenerativePart(file: File) {
+  const base64EncodedData = await file.arrayBuffer().then(buffer => Buffer.from(buffer).toString('base64'));
+  return {
+    inlineData: {
+      data: base64EncodedData,
+      mimeType: file.type,
+    },
+  };
+}
+
+export async function POST(req: Request) {
   try {
-    if (!vertexAI) {
-      throw new Error('Vertex AI client is not initialized. Check server logs for initialization errors.');
+    const formData = await req.formData();
+    const file = formData.get('file') as File;
+    const gradePrompts = formData.get('prompt') as string;
+    const language = formData.get('language') as string || 'en'; // Default to English
+
+    if (!file) {
+      return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     }
 
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    const token = authHeader.split('Bearer ')[1];
-    await adminAuth.verifyIdToken(token);
+    const finalPrompt = magicPrompt
+      .replace('[SELECTED_LANGUAGE]', language === 'en' ? 'English' : language)
+      .replace('[GRADE_PROMPTS]', gradePrompts);
 
-    const { text, grades, language } = await request.json();
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
+    const imagePart = await fileToGenerativePart(file);
 
-    if (!text || !grades || grades.length === 0) {
-      return NextResponse.json({ error: 'Text and at least one grade are required.' }, { status: 400 });
-    }
-
-    const model = vertexAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-    const prompt = getWorksheetPrompt(text, grades, language);
-
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent([finalPrompt, imagePart]);
     const response = await result.response;
-    const worksheet = response.candidates?.[0]?.content?.parts?.[0]?.text;
+    const text = response.text();
 
-    if (!worksheet) {
-      console.error('Worksheet generation failed:', response);
-      return NextResponse.json({ error: 'Failed to generate worksheet from AI response.' }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: true, worksheet });
-
-  } catch (error: any) {
-    console.error('Worksheet API Error:', error);
-    return NextResponse.json({ error: 'Failed to generate worksheet', details: error.message }, { status: 500 });
+    return NextResponse.json({ worksheet: text });
+  } catch (error) {
+    console.error('Error generating worksheet:', error);
+    return NextResponse.json({ error: 'Failed to generate worksheet' }, { status: 500 });
   }
 }

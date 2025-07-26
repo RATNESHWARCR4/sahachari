@@ -2,6 +2,11 @@
 
 interface Translations {
   [key: string]: {
+    app: {
+        name: string;
+        tagline: string;
+        description: string;
+    };
     auth: {
       welcome: string;
       tagline: string;
@@ -46,14 +51,34 @@ interface Translations {
       save: string;
       copy: string;
       copied: string;
+      welcome: string;
+      print: string;
+      download: string;
+      share: string;
+      backToHome: string;
+      downloadPdf: string;
     };
-    // ... other keys
+    worksheetCreator: {
+        uploadContent: string;
+        dragAndDrop: string;
+        customizeOptions: string;
+        optionsComingSoon: string;
+        generate: string;
+        generating: string;
+        generatedWorksheet: string;
+        selectGrades: string;
+    };
   };
 }
 
 
 export const translations: Translations = {
   en: {
+    app: {
+      name: 'Sahachari',
+      tagline: 'Your AI companion in the teaching journey',
+      description: 'An AI-powered teaching assistant for multi-grade classrooms in India',
+    },
     auth: {
       welcome: 'Welcome to Sahachari',
       tagline: 'Your AI companion in the teaching journey',
@@ -98,9 +123,30 @@ export const translations: Translations = {
       save: 'Save',
       copy: 'Copy',
       copied: 'Copied!',
+      welcome: 'Welcome',
+      print: 'Print',
+      download: 'Download',
+      share: 'Share',
+      backToHome: 'Back to Home',
+      downloadPdf: 'Download as PDF',
+    },
+    worksheetCreator: {
+        uploadContent: 'Upload Content',
+        dragAndDrop: 'Drag and drop your files here',
+        customizeOptions: 'Customize Options',
+        optionsComingSoon: 'Customization options coming soon!',
+        generate: 'Generate Worksheet',
+        generating: 'Generating...',
+        generatedWorksheet: 'Generated Worksheet',
+        selectGrades: 'Select Grades',
     },
   },
   hi: {
+    app: {
+      name: 'सहचारी',
+      tagline: 'शिक्षण यात्रा में आपका AI साथी',
+      description: 'भारत में बहु-श्रेणी कक्षाओं के लिए एक AI-संचालित शिक्षण सहायक',
+    },
     auth: {
       welcome: 'सहचारी में आपका स्वागत है',
       tagline: 'शिक्षण यात्रा में आपका AI साथी',
@@ -145,9 +191,30 @@ export const translations: Translations = {
       save: 'सहेजें',
       copy: 'कॉपी करें',
       copied: 'कॉपी किया गया!',
+      welcome: 'स्वागत है',
+      print: 'प्रिंट',
+      download: 'डाउनलोड',
+      share: 'शेयर',
+      backToHome: 'होम पर वापस जाएं',
+      downloadPdf: 'पीडीएफ के रूप में डाउनलोड करें',
+    },
+    worksheetCreator: {
+        uploadContent: 'सामग्री अपलोड करें',
+        dragAndDrop: 'अपनी फाइलें यहां खींचें और छोड़ें',
+        customizeOptions: 'विकल्प अनुकूलित करें',
+        optionsComingSoon: 'अनुकूलन विकल्प जल्द ही आ रहे हैं!',
+        generate: 'वर्कशीट बनाएं',
+        generating: 'बना रहा है...',
+        generatedWorksheet: 'बनाई गई वर्कशीट',
+        selectGrades: 'ग्रेड चुनें',
     },
   },
   kn: {
+    app: {
+        name: 'ಸಹಚಾರಿ',
+        tagline: 'ಬೋಧನಾ ಪಯಣದಲ್ಲಿ ನಿಮ್ಮ AI ಸಂಗಾತಿ',
+        description: 'ಭಾರತದಲ್ಲಿ ಬಹು-ದರ್ಜೆಯ ತರಗತಿಗಳಿಗೆ AI-ಚಾಲಿತ ಬೋಧನಾ ಸಹಾಯಕ',
+    },
     auth: {
         welcome: 'ಸಹಚಾರಿಗೆ ಸುಸ್ವಾಗತ',
         tagline: 'ಬೋಧನಾ ಪಯಣದಲ್ಲಿ ನಿಮ್ಮ AI ಸಂಗಾತಿ',
@@ -192,9 +259,30 @@ export const translations: Translations = {
         save: 'ಉಳಿಸಿ',
         copy: 'ನಕಲಿಸಿ',
         copied: 'ನಕಲಿಸಲಾಗಿದೆ!',
+        welcome: 'ಸ್ವಾಗತ',
+        print: 'ಮುದ್ರಿಸು',
+        download: 'ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ',
+        share: 'ಹಂಚಿಕೊಳ್ಳಿ',
+        backToHome: 'ಮುಖಪುಟಕ್ಕೆ ಹಿಂತಿರುಗಿ',
+        downloadPdf: 'ಪಿಡಿಎಫ್ ಆಗಿ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ',
       },
+    worksheetCreator: {
+        uploadContent: 'ವಿಷಯವನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ',
+        dragAndDrop: 'ನಿಮ್ಮ ಫೈಲ್‌ಗಳನ್ನು ಇಲ್ಲಿ ಎಳೆದು ಬಿಡಿ',
+        customizeOptions: 'ಆಯ್ಕೆಗಳನ್ನು ಕಸ್ಟಮೈಸ್ ಮಾಡಿ',
+        optionsComingSoon: 'ಕಸ್ಟಮೈಸ್ ಆಯ್ಕೆಗಳು ಶೀಘ್ರದಲ್ಲೇ ಬರಲಿವೆ!',
+        generate: 'ಕಾರ್ಯಪಟ್ಟಿಯನ್ನು ರಚಿಸಿ',
+        generating: 'ರಚಿಸಲಾಗುತ್ತಿದೆ...',
+        generatedWorksheet: 'ರಚಿಸಲಾದ ಕಾರ್ಯಪಟ್ಟಿ',
+        selectGrades: 'ಗ್ರೇಡ್‌ಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ',
+    },
   },
   mr: {
+    app: {
+        name: 'सहचारी',
+        tagline: 'शिकवण्याच्या प्रवासात तुमचा AI सोबती',
+        description: 'भारतातील बहु-श्रेणी वर्गांसाठी AI-शक्तीशाली शिक्षण सहाय्यक',
+    },
     auth: {
       welcome: 'सहचारीमध्ये आपले स्वागत आहे',
       tagline: 'शिकवण्याच्या प्रवासात तुमचा AI सोबती',
@@ -239,6 +327,22 @@ export const translations: Translations = {
       save: 'जतन करा',
       copy: 'कॉपी करा',
       copied: 'कॉपी केले!',
+      welcome: 'स्वागत आहे',
+      print: 'प्रिंट',
+      download: 'डाउनलोड',
+      share: 'शेअर करा',
+      backToHome: 'घरी परत जा',
+      downloadPdf: 'पीडीएफ म्हणून डाउनलोड करा',
+    },
+    worksheetCreator: {
+        uploadContent: 'सामग्री अपलोड करा',
+        dragAndDrop: 'तुमच्या फायली येथे ड्रॅग आणि ड्रॉप करा',
+        customizeOptions: 'पर्याय सानुकूलित करा',
+        optionsComingSoon: 'सानुकूलन पर्याय लवकरच येत आहेत!',
+        generate: 'वर्कशीट तयार करा',
+        generating: 'तयार होत आहे...',
+        generatedWorksheet: 'तयार केलेली वर्कशीट',
+        selectGrades: 'ग्रेड निवडा',
     },
   },
 };

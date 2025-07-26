@@ -197,7 +197,7 @@ export default function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center"
           >
-            <h2 className="text-4xl font-bold mb-4">
+            <h2 className="text-4xl font-bold mb-.4">
               {t(language, 'app.tagline')}
             </h2>
             <p className="text-xl opacity-90">

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import { adminAuth } from '@/app/lib/firebase-admin';
 
-const MODEL_NAME = "gemini-2.5-flash";
+const MODEL_NAME = "gemini-2.5-pro";
 const API_KEY = process.env.GEMINI_API_KEY;
 
 // Function to run the chat with the Gemini model
