@@ -414,6 +414,7 @@ export default function StoryMakerPage() {
                   </>
                 )}
               </button>
+              <div>NEXT_PUBLIC_USE_DEMO: {process.env.NEXT_PUBLIC_USE_DEMO ? 'true' : 'false'}</div>
             </motion.div>
           </div>
 
